@@ -219,26 +219,26 @@ signed int tag_in_set(unsigned int tag, unsigned int index)
 
 unsigned char read_byte(unsigned int address)
 {
-	int AIndex = address/ blockSize % Nsets;
+	int set = address/ blockSize % Nsets;
 	int ATag = address / (blockSize*Nsets);
 	int AOffset = address % blockSize;
 	//reviso si el address esta en cache.
 	//voy al set que contiene el indice del address a ver si contiene el tag del address
 	//en alguna de las 8 vias.
-	if (tag_in_set(ATag, AIndex) == -1)
+	if (tag_in_set(ATag, set) == -1)
 	{
 		//Si el tag no coincide hay un miss, le pido que haga un fetch.
 		//1)incremento order para todos en el set con bit de validez 1
 		for (int i=0; i < Nways; i++)
 		{
-			if (cache[i][AIndex].v == 1)
+			if (cache[i][set].v == 1)
 			{
 				cache[i][set].order++;
 			}
 		}
 	
 		//2) copio el bloque de memoria a la posicion indicada
-		read_tocache(ATag, select_oldest(AIndex), AIndex);
+		read_tocache(ATag, select_oldest(set), set);
 		misses++;
 	}
 	else
@@ -247,14 +247,14 @@ unsigned char read_byte(unsigned int address)
 		hits++;
 	}
 	//ahora si o si esta el byte en cache. Veo en que posicion esta:
-	int pos = tag_in_set(ATag, AIndex);
-	return cache[pos][AIndex].dir[AOffset];
+	int pos = tag_in_set(ATag, set);
+	return cache[pos][set].dir[AOffset];
 }
 
 void write_byte(unsigned int address, unsigned char value)
 {
 	int AIndex = address/ blockSize % Nsets;
-	int ATag = address / (blotag_in_setckSize*Nsets);
+	int ATag = address / (blockSize*Nsets);
 	int AOffset = address % blockSize;
 	//el cache es WB/WA, por lo tanto escribe si o si en memoria
 	memory[ATag].dir[AOffset] = value;
